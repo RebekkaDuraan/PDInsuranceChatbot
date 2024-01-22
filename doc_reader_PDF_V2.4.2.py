@@ -110,20 +110,14 @@ def custom_prompt(question):
     history = conversation.get_formatted_history()
     instructions = (
         """
-        "
-        You are a friendly and helpful assistant, always eager to assist customers with their pet insurance queries.
+        You are a friendly and helpful assistant, specialized in PD Insurance for cats and dogs. 
+        Answer questions based on the content of the provided PDF. If the information is not in the PDF, 
+        use the default answer. Do not mention the absence of information in the PDF. 
+        For non-related queries, remind the user that the focus is on pet insurance. 
+        In case of ambiguity, ask clarifying questions.
+        Do not answer any questions about costs or prices, use the default answer.
         
-        Only answer questions about PD Insurance who only cover cats and dogs.
-        
-        Specificity: Your answers should be specific to the content of the PDF and should only speak on the content in the document related to the question. If the content cannot be found in the content, refer the client to call 0800 738 467 or email contactus@pd.co.nz.
-        
-        Never mention the context or PDF. Instead refer the client to contact PD Insurance, since they would better be able to assist them if they asked a pet insurance related question that you cannot answer.
-        
-        If the question does not relate to PD Insurance pet insurance, tell the client that we are a pet insurance company and request it to ask questions relating to that.
-
-        Context-based Answers: Only provide answers that are directly drawn from the content of the PDF.
-
-        Handling Ambiguity: If the chatbot encounters a question that could have multiple answers within the document, it should ask clarifying questions or provide answers that encompass all relevant sections of the PDF."
+        Default answer: "I'm sorry, I cannot help you with that. Please contact PD Insurance at 0800 738 467 or email contactus@pd.co.nz for more information or ask another question."
         """
     )
     # Ensure the history is correctly appended
@@ -207,27 +201,36 @@ def ask_multiple_questions(questions):
 #     main()
 
 # Streamlit interface for the chatbot
-st.title('Pet Insurance Chatbot')
+# Title of the app
+st.title('PD Insurance Chatbot')
 
 # Initialize session state for conversation history
 if 'history' not in st.session_state:
     st.session_state['history'] = []
 
-# Text input for user query
-user_input = st.text_input("Type your question here:")
+# Display the conversation history
+for index, (role, line) in enumerate(st.session_state['history']):
+    # Use the index to create a unique key for each text area
+    st.text_area(role, value=line, height=75, disabled=True, key=f"{role}_{index}")
 
-# Handling user input
-if user_input:
-    # If user types 'quit', clear the conversation
+# Function for Handling User Input
+def handle_user_input():
+    user_input = st.session_state.user_input
     if user_input.lower() == 'quit':
         st.session_state['history'] = []
         st.write("Chatbot: Thank you for using the Pet Insurance Chatbot. Have a great day!")
     else:
         # Get the response from the chatbot and update conversation history
-        response = ask_question(user_input)
+        response = ask_question(user_input)  # Assuming 'ask_question' is a defined function
         st.session_state['history'].append(('You', user_input))
         st.session_state['history'].append(('Chatbot', response))
+    
+    # Clear the input field after processing the question
+    st.session_state.user_input = ""
 
-# Display the conversation history
-for role, line in st.session_state['history']:
-    st.text_area(role, value=line, height=75, disabled=True)
+# Text input for user query at the bottom
+user_input = st.text_input("Type your question here:", key="user_input", on_change=handle_user_input)
+
+# Check if there is input and handle it (Optional: This block can be removed if the input is only handled in on_change)
+if user_input:
+    handle_user_input()
